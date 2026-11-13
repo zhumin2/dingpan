@@ -1,0 +1,1681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>定盘 · 升学评测（广东 3+1+2）交互原型</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231B4E43'/%3E%3Cpath d='M9 22V13M16 22V9M23 22V16' stroke='%23F2F3EF' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://miaoda.feishu.cn">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=JetBrains+Mono:wght@400;500;700&amp;display=swap">
+<style>
+/* ============ 设计 tokens ============ */
+:root{
+  --paper:#F2F3EF;
+  --card:#FFFFFF;
+  --ink:#17211C;
+  --ink2:#5A645C;
+  --ink3:#8D968E;
+  --line:#DCDFD7;
+  --line2:#EDEFE9;
+  --brand:#1B4E43;
+  --brand-soft:#E5EDE9;
+  --rush:#B4573A;
+  --rush-soft:#F7E9E3;
+  --stable:#2F6C8A;
+  --stable-soft:#E6EFF4;
+  --safe:#4A7C59;
+  --safe-soft:#E9F0E9;
+  --gold:#A9812F;
+  --num:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --r:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{
+  font-family:-apple-system,"PingFang SC","Microsoft YaHei","Hiragino Sans GB",sans-serif;
+  color:var(--ink);
+  background:#E6E8E2;
+  font-size:15px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:repeating-linear-gradient(90deg,transparent 0 47px,rgba(23,33,28,.05) 47px 48px);
+}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+input,select{font:inherit;color:inherit}
+p{margin:0}
+
+/* ============ 舞台 ============ */
+.stage{position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;justify-content:center;gap:64px;padding:44px 28px}
+.phone{
+  width:390px;height:844px;flex:none;position:relative;
+  background:#0E1512;border-radius:46px;padding:9px;
+  box-shadow:0 40px 80px -28px rgba(10,22,18,.5),0 0 0 1px rgba(255,255,255,.05) inset;
+}
+.screen{
+  position:relative;width:100%;height:100%;background:var(--paper);
+  border-radius:38px;overflow:hidden;display:flex;flex-direction:column;
+}
+.notch{position:absolute;top:16px;left:50%;transform:translateX(-50%);width:112px;height:26px;background:#0E1512;border-radius:14px;z-index:40}
+
+/* ============ 状态栏 ============ */
+.statusbar{
+  flex:none;height:46px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 26px;font-size:13px;font-weight:600;color:var(--ink);position:relative;z-index:30;
+}
+.statusbar .sb-right{display:flex;align-items:center;gap:5px}
+.statusbar svg{display:block}
+
+/* ============ 视图容器 ============ */
+main{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;position:relative}
+main::-webkit-scrollbar{display:none}
+.view{display:none;padding:0 0 20px}
+.view.on{display:block;animation:vin .22s ease-out}
+@keyframes vin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.pad{padding:0 20px}
+
+/* ============ 顶部栏 ============ */
+.appbar{
+  flex:none;height:50px;display:flex;align-items:center;gap:10px;
+  padding:0 14px;border-bottom:1px solid var(--line2);background:var(--paper);
+  position:relative;z-index:20;
+}
+.appbar .ab-title{font-size:16px;font-weight:600;letter-spacing:-.01em}
+.iconbtn{
+  width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+  border-radius:10px;color:var(--ink);flex:none;transition:background .15s;
+}
+.iconbtn:active{background:#E3E5DE}
+.appbar .ab-right{margin-left:auto;font-size:12.5px;color:var(--ink3);font-family:var(--num)}
+
+/* ============ 品牌 ============ */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding-top:4px}
+.brand{display:flex;align-items:center;gap:9px}
+.logo{width:26px;height:26px;flex:none}
+.brand-name{font-size:17px;font-weight:700;letter-spacing:.02em}
+.brand-sub{font-size:11.5px;color:var(--ink3);letter-spacing:.04em;margin-left:2px}
+.pill{
+  font-size:12px;color:var(--brand);background:var(--brand-soft);
+  padding:4px 10px;border-radius:999px;font-weight:600;white-space:nowrap;
+}
+
+/* ============ 标题区 ============ */
+.hero-title{
+  font-size:30px;line-height:1.32;font-weight:700;letter-spacing:-.02em;margin:26px 0 0;
+}
+.lede{font-size:14px;line-height:1.7;color:var(--ink2);margin-top:12px;max-width:31em}
+
+/* ============ 成绩卡 ============ */
+.scorecard{
+  margin-top:24px;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r);padding:18px;position:relative;overflow:hidden;
+}
+.ruler-mini{height:22px;position:relative;margin:-4px 0 14px}
+.ruler-mini i{position:absolute;top:0;width:1px;background:var(--line);height:6px}
+.ruler-mini i:nth-child(5n+1){height:11px;background:#C9CEC4}
+.scorecard .sc-label{font-size:12px;color:var(--ink3);letter-spacing:.02em}
+.scorecard .sc-empty-t{font-size:17px;font-weight:600;margin-top:6px}
+.scorecard .sc-empty-d{font-size:13.5px;color:var(--ink2);margin-top:7px;line-height:1.65}
+
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  height:48px;border-radius:11px;font-size:15px;font-weight:600;
+  width:100%;transition:transform .12s,background .15s;
+}
+.btn:active{transform:scale(.985)}
+.btn-primary{background:var(--brand);color:#F4F6F2}
+.btn-primary:active{background:#173F36}
+.btn-ghost{background:#EDEFE9;color:var(--ink);border:1px solid var(--line)}
+.btn-block{margin-top:16px}
+.btn-sm{height:38px;font-size:13.5px;border-radius:9px;width:auto;padding:0 14px}
+
+/* 已录入状态 */
+.sc-row{display:flex;align-items:flex-end;gap:18px}
+.sc-big{font-family:var(--num);font-size:34px;font-weight:700;line-height:1;letter-spacing:-.03em}
+.sc-unit{font-size:12px;color:var(--ink3);margin-left:5px;font-family:inherit;font-weight:500}
+.sc-meta{font-size:12.5px;color:var(--ink2);line-height:1.6}
+.sc-meta b{font-family:var(--num);font-weight:700;color:var(--ink)}
+
+/* ============ 统计条 ============ */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:18px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.stat{padding:13px 0 13px 0;text-align:left}
+.stat:nth-child(2),.stat:nth-child(3){padding-left:14px;border-left:1px solid var(--line)}
+.stat .sv{font-family:var(--num);font-size:19px;font-weight:700;letter-spacing:-.02em}
+.stat .sl{font-size:11.5px;color:var(--ink3);margin-top:3px;letter-spacing:.01em}
+
+/* ============ 区块标题 ============ */
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;margin:30px 0 12px}
+.sec-h h2{font-size:15px;font-weight:600;letter-spacing:0;margin:0}
+.sec-h .more{font-size:12.5px;color:var(--ink3)}
+
+/* ============ 快捷入口 ============ */
+.entries{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.entry{
+  background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:14px 14px 13px;text-align:left;transition:background .15s,border-color .15s;
+}
+.entry:active{background:#FAFBF8;border-color:#CBD0C6}
+.entry .et{font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px}
+.entry .ed{font-size:12px;color:var(--ink3);margin-top:5px;line-height:1.5}
+.entry svg{color:var(--brand)}
+
+/* ============ 三步说明 ============ */
+.steps{margin-top:8px}
+.step{display:grid;grid-template-columns:26px 1fr;gap:12px;padding:14px 0;border-bottom:1px solid var(--line2)}
+.step:last-child{border-bottom:0}
+.step .sn{font-family:var(--num);font-size:11px;color:var(--ink3);padding-top:3px;letter-spacing:.02em}
+.step .st{font-size:14px;font-weight:600}
+.step .sd{font-size:12.5px;color:var(--ink2);margin-top:3px;line-height:1.6}
+
+/* ============ 说明脚注 ============ */
+.footnote{font-size:11.5px;color:var(--ink3);line-height:1.75;margin-top:22px;padding:14px;background:#EDEFE9;border-radius:11px}
+.footnote b{color:var(--ink2);font-weight:600}
+
+/* ============ 底部导航 ============ */
+.tabbar{
+  flex:none;height:66px;display:grid;grid-template-columns:repeat(4,1fr);
+  background:#F7F8F5;border-top:1px solid var(--line);padding:6px 8px 10px;position:relative;z-index:20;
+}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-radius:10px;color:var(--ink3)}
+.tab .tb-t{font-size:11px;letter-spacing:.02em}
+.tab.on{color:var(--brand)}
+.tab.on svg{color:var(--brand)}
+.tab:active{background:#EDEFE9}
+
+/* ============ 通用：视图标题 ============ */
+.vh{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:16px 0 0}
+.vh-sub{font-size:13px;color:var(--ink3);margin-top:6px;line-height:1.6}
+.backlink{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;color:var(--ink3);padding:6px 0}
+
+/* ============ 分段控件 / 科目选择 ============ */
+.seg{display:grid;grid-template-columns:1fr 1fr;background:#E7E9E3;border-radius:11px;padding:3px;gap:3px}
+.seg button{height:42px;border-radius:9px;font-size:14px;font-weight:600;color:var(--ink2);transition:.15s}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.07)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{height:42px;min-width:66px;padding:0 15px;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:14px;font-weight:500;color:var(--ink2);transition:.15s}
+.chip.on{border-color:var(--brand);color:var(--brand);background:var(--brand-soft);font-weight:600}
+.chip:disabled{opacity:.42;cursor:not-allowed}
+.fg-h{font-size:12.5px;color:var(--ink2);font-weight:600;margin:20px 0 8px;display:flex;align-items:center;gap:6px}
+.fg-h .hint{font-weight:400;color:var(--ink3);font-size:11.5px}
+
+/* ============ 成绩录入卡 ============ */
+.formcard{background:#fff;border:1px solid var(--line);border-radius:14px;margin-top:12px;overflow:hidden}
+.fc-h{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 11px;border-bottom:1px solid var(--line2);background:#FBFCF8}
+.fc-h .t{font-size:13.5px;font-weight:600}
+.fc-h .line{font-size:11.5px;color:var(--ink3);display:flex;align-items:center;gap:5px}
+.fc-h input{width:50px;height:27px;border:1px solid var(--line);border-radius:7px;text-align:center;font-family:var(--num);font-size:12.5px;background:#fff;padding:0 2px}
+.fc-h input:focus{outline:none;border-color:var(--brand)}
+.srow{display:grid;grid-template-columns:1fr 78px 30px;align-items:center;gap:6px;padding:0 16px;height:47px;border-bottom:1px solid var(--line2)}
+.srow:last-child{border-bottom:0}
+.srow .sn{font-size:14px;display:flex;align-items:center;gap:6px}
+.srow .sn em{font-style:normal;font-size:10.5px;color:var(--ink3);background:#F1F3EE;padding:1px 5px;border-radius:4px}
+.srow input{width:100%;height:33px;border:1px solid var(--line);border-radius:8px;text-align:right;padding:0 8px;font-family:var(--num);font-size:15px;font-weight:500;background:#FBFCF8;min-width:0}
+.srow input:focus{outline:none;border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px rgba(27,78,67,.08)}
+.srow .u{font-size:10.5px;color:var(--ink3);text-align:right}
+.fc-total{display:flex;align-items:baseline;justify-content:space-between;padding:11px 16px;background:#F6F7F3}
+.fc-total span{font-size:12.5px;color:var(--ink2)}
+.fc-total b{font-family:var(--num);font-size:20px;font-weight:700;letter-spacing:-.02em}
+.fc-total b i{font-style:normal;font-size:11.5px;color:var(--ink3);font-weight:400}
+
+.opt-row{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-top:1px solid var(--line2);background:#fff;border-radius:0}
+.opt-row .ol{font-size:13.5px}
+.opt-row .od{font-size:11.5px;color:var(--ink3);margin-top:2px}
+.sticky-cta{position:sticky;bottom:0;padding:14px 0 12px;margin-top:18px;background:linear-gradient(to top,#F2F3EF 58%,rgba(242,243,239,0))}
+
+/* ============ 换算过程 ============ */
+.calclist{margin-top:26px}
+.cl{display:grid;grid-template-columns:30px 1fr;gap:12px;padding:16px 0;border-bottom:1px solid var(--line2);opacity:.35;transition:opacity .3s}
+.cl.done{opacity:1}
+.cl .ck{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;margin-top:1px;color:#fff}
+.cl.done .ck{background:var(--brand);border-color:var(--brand)}
+.cl .ct{font-size:14.5px;font-weight:600}
+.cl .cd{font-size:12.5px;color:var(--ink2);margin-top:4px;line-height:1.6;font-family:var(--num)}
+.bigresult{margin-top:28px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;text-align:center}
+.bigresult .bl{font-size:11.5px;color:var(--ink3);letter-spacing:.03em}
+.bigresult .bv{font-family:var(--num);font-size:46px;font-weight:700;letter-spacing:-.04em;line-height:1.1;margin-top:6px}
+
+/* ============ 结果页 ============ */
+.res-top{display:flex;align-items:flex-start;justify-content:space-between;margin-top:10px}
+.res-score{font-family:var(--num);font-size:54px;font-weight:700;letter-spacing:-.045em;line-height:.95}
+.res-score sub{font-size:13px;font-family:inherit;font-weight:500;color:var(--ink3);letter-spacing:0;vertical-align:baseline;margin-left:4px}
+.res-cap{font-size:12.5px;color:var(--ink2);margin-top:8px;line-height:1.6}
+.res-badge{flex:none;text-align:right}
+.res-badge .rb-n{font-family:var(--num);font-size:22px;font-weight:700;letter-spacing:-.02em}
+.res-badge .rb-l{font-size:10.5px;color:var(--ink3);margin-top:2px}
+.res-meta{display:flex;gap:0;margin-top:16px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.res-meta .m{flex:1;padding:11px 0}
+.res-meta .m:nth-child(2),.res-meta .m:nth-child(3){padding-left:12px;border-left:1px solid var(--line)}
+.res-meta .mv{font-family:var(--num);font-size:13.5px;font-weight:700;letter-spacing:-.03em;white-space:nowrap}
+.res-meta .ml{font-size:10.5px;color:var(--ink3);margin-top:2px}
+
+/* 位次尺 */
+.rankbar{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 16px 12px;margin-top:20px}
+.rb-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.rb-head .t{font-size:12.5px;font-weight:600}
+.rb-legend{display:flex;gap:9px;font-size:10.5px;color:var(--ink3)}
+.rb-legend span{display:flex;align-items:center;gap:3px}
+.lg-dot{width:6px;height:6px;border-radius:2px;display:inline-block}
+.track-wrap{position:relative;padding-top:32px}
+.track{position:relative;height:9px;border-radius:4px;overflow:hidden}
+.marker{position:absolute;top:32px;height:9px;width:1px;background:var(--gold);z-index:3}
+.marker::before{content:"";position:absolute;top:-15px;left:-3px;width:7px;height:7px;background:var(--gold);border-radius:1.5px;transform:rotate(45deg)}
+.marker-lab{position:absolute;top:-26px;transform:translateX(-50%);font-family:var(--num);font-size:11px;font-weight:700;color:var(--gold);white-space:nowrap;z-index:4}
+.ticks{position:relative;height:15px;margin-top:8px}
+.ticks span{position:absolute;transform:translateX(-50%);font-family:var(--num);font-size:9.5px;color:var(--ink3);white-space:nowrap}
+.zone-lab{display:flex;justify-content:space-between;font-size:10.5px;color:var(--ink3);margin-top:6px;padding-bottom:2px}
+
+/* 结果 tabs */
+.rtabs{display:flex;margin:26px 0 1px;border-bottom:1px solid var(--line)}
+.rtab{flex:1;padding:0 0 10px;font-size:14px;color:var(--ink3);text-align:center;position:relative;font-weight:500}
+.rtab.on{color:var(--ink);font-weight:700}
+.rtab.on::after{content:"";position:absolute;bottom:-1px;left:24%;right:24%;height:2px;background:var(--ink);border-radius:1px}
+.rtab .n{font-family:var(--num);font-size:11px;margin-left:2px;color:var(--ink3);font-weight:500}
+.tier-note{font-size:11.5px;color:var(--ink3);padding:11px 0 13px;line-height:1.6}
+
+/* 院校卡 */
+.scard{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:14px 15px 12px;margin-bottom:10px;transition:border-color .15s,background .15s}
+.scard:active{background:#FAFBF8;border-color:#C7CDC3}
+.scard-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.sc-name{font-size:15.5px;font-weight:600;letter-spacing:-.01em;line-height:1.3}
+.sc-sub{font-size:11.5px;color:var(--ink3);margin-top:4px;font-family:var(--num);letter-spacing:0}
+.sc-tags{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
+.tag{font-size:10px;padding:1.5px 6px;border-radius:4px;background:#F2F4EF;color:var(--ink2);border:1px solid #E3E6DE;white-space:nowrap}
+.tag.key{background:#EAF0EC;color:#1B4E43;border-color:#CFDDD5;font-weight:600}
+.tag.rush{background:var(--rush-soft);color:var(--rush);border-color:#EFD7CD}
+.tag.stable{background:var(--stable-soft);color:var(--stable);border-color:#D3E2EB}
+.tag.safe{background:var(--safe-soft);color:var(--safe);border-color:#D6E3D8}
+.sc-prob{text-align:right;flex:none;padding-left:4px}
+.sc-prob .pv{font-family:var(--num);font-size:20px;font-weight:700;line-height:1;letter-spacing:-.03em}
+.sc-prob .pv i{font-style:normal;font-size:11px;font-weight:500}
+.sc-prob .pl{font-size:10px;color:var(--ink3);margin-top:4px}
+.scard-bot{display:flex;margin-top:12px;padding-top:9px;border-top:1px dashed var(--line)}
+.kv{flex:1;min-width:0}
+.kv .k{font-size:10px;color:var(--ink3);white-space:nowrap}
+.kv .v{font-family:var(--num);font-size:13px;font-weight:600;margin-top:2px}
+.empty{text-align:center;padding:44px 20px;color:var(--ink3);font-size:13px;line-height:1.7}
+
+/* ============ 详情页 ============ */
+.det-head{margin-top:6px}
+.det-name{font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1.3}
+.det-tags{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap}
+.det-city{font-size:12.5px;color:var(--ink2);margin-top:10px}
+.det-city span{font-family:var(--num);color:var(--ink3);margin-left:8px}
+.prob-block{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:16px}
+.pb-top{display:flex;align-items:flex-end;justify-content:space-between}
+.pb-top .pl{font-size:12px;color:var(--ink2)}
+.pb-top .pv{font-family:var(--num);font-size:34px;font-weight:700;letter-spacing:-.04em;line-height:1}
+.pb-desc{font-size:12px;color:var(--ink3);margin-top:12px;line-height:1.65}
+.chart-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 12px 6px;margin-top:12px}
+.cc-h{display:flex;align-items:baseline;justify-content:space-between;padding:0 4px 4px}
+.cc-h .t{font-size:13px;font-weight:600}
+.cc-h .s{font-size:10.5px;color:var(--ink3)}
+#chart{width:100%;height:150px}
+.majors{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-top:12px;overflow:hidden}
+.mj-h{display:grid;grid-template-columns:1fr 46px 62px;gap:6px;padding:10px 14px;background:#F6F7F3;font-size:10.5px;color:var(--ink3);border-bottom:1px solid var(--line2)}
+.mj-h span:nth-child(2),.mj-h span:nth-child(3){text-align:right}
+.mj{display:grid;grid-template-columns:1fr 46px 62px;gap:6px;padding:11px 14px;border-bottom:1px solid var(--line2);align-items:center;text-align:left;width:100%}
+.mj:last-child{border-bottom:0}
+.mj:active{background:#FAFBF8}
+.mj .n{font-size:13.5px;font-weight:500}
+.mj .n em{font-style:normal;display:block;font-size:10.5px;color:var(--ink3);margin-top:2px;font-weight:400}
+.mj .p,.mj .r{font-family:var(--num);font-size:12.5px;text-align:right;color:var(--ink2)}
+.det-note{font-size:11px;color:var(--ink3);line-height:1.7;margin-top:14px}
+
+/* ============ 志愿表 ============ */
+.my-list{display:flex;flex-direction:column;gap:9px;margin-top:16px}
+.slot{display:grid;grid-template-columns:26px 1fr auto;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 12px 12px 10px}
+.slot .no{font-family:var(--num);font-size:12px;font-weight:700;color:var(--ink3);text-align:center}
+.slot .sname{font-size:14px;font-weight:600}
+.slot .smeta{font-size:10.5px;color:var(--ink3);margin-top:3px;font-family:var(--num)}
+.slot .acts{display:flex;gap:2px}
+.sbtn{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:7px;color:var(--ink3)}
+.sbtn:active{background:#EDEFE9}
+.health{background:var(--brand);color:#EFF3EF;border-radius:14px;padding:16px;margin-top:18px}
+.health .h-t{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+.health .h-d{font-size:12px;line-height:1.7;margin-top:8px;color:#D6E3DE}
+.health .h-metrics{display:flex;gap:18px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.18)}
+.health .h-metrics div .v{font-family:var(--num);font-size:17px;font-weight:700}
+.health .h-metrics div .k{font-size:10.5px;color:#C3D5CF;margin-top:1px}
+
+/* ============ 我的 ============ */
+.prof-head{display:flex;align-items:center;gap:12px;margin-top:14px}
+.avatar{width:48px;height:48px;border-radius:14px;background:var(--brand);color:#EFF3EF;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700}
+.prof-head .pn{font-size:16px;font-weight:600}
+.prof-head .pd{font-size:11.5px;color:var(--ink3);margin-top:3px;font-family:var(--num)}
+.menu{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-top:14px;overflow:hidden}
+.mrow{display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 15px;border-bottom:1px solid var(--line2);text-align:left}
+.mrow:last-child{border-bottom:0}
+.mrow:active{background:#FAFBF8}
+.mrow .mt{font-size:14px}
+.mrow .mv{font-size:12.5px;color:var(--ink3);font-family:var(--num);display:flex;align-items:center;gap:5px}
+.hist{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 15px;margin-top:10px;width:100%;text-align:left}
+.hist .ht{font-size:13.5px;font-weight:600}
+.hist .hd{font-size:11.5px;color:var(--ink3);margin-top:5px;font-family:var(--num)}
+
+/* ============ 底部弹层 ============ */
+.mask{position:absolute;inset:0;background:rgba(18,26,22,.42);opacity:0;pointer-events:none;transition:opacity .22s;z-index:50}
+.mask.on{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--paper);border-radius:20px 20px 0 0;transform:translateY(102%);transition:transform .26s cubic-bezier(.32,.72,.28,1);z-index:60;max-height:74%;display:flex;flex-direction:column}
+.sheet.on{transform:none}
+.sh-grab{width:36px;height:4px;border-radius:2px;background:#CBD0C6;margin:9px auto 4px;flex:none}
+.sh-head{display:flex;align-items:center;justify-content:space-between;padding:8px 20px 12px;border-bottom:1px solid var(--line);flex:none}
+.sh-head .t{font-size:15px;font-weight:600}
+.sh-body{overflow-y:auto;padding:16px 20px calc(24px + env(safe-area-inset-bottom))}
+.rt-table{width:100%;border-collapse:collapse;table-layout:fixed}
+.rt-table th,.rt-table td{font-size:12.5px;padding:8px 6px;border-bottom:1px solid var(--line2);text-align:right}
+.rt-table th{font-size:10.5px;color:var(--ink3);font-weight:500;text-align:right}
+.rt-table td:nth-child(1),.rt-table th:nth-child(1){text-align:left}
+.rt-table td{font-family:var(--num)}
+.rt-table td:nth-child(1){font-family:inherit;font-weight:500}
+.rule-text{font-size:13px;line-height:1.85;color:var(--ink2)}
+.rule-text b{color:var(--ink);font-weight:600}
+.rule-code{font-family:var(--num);font-size:12px;background:#E7E9E3;padding:9px 11px;border-radius:8px;margin:8px 0 12px;display:block;line-height:1.7;overflow-x:auto;white-space:pre-wrap}
+
+/* toast */
+.toast{position:absolute;left:50%;bottom:96px;transform:translate(-50%,10px);background:#17211C;color:#F2F3EF;font-size:12.5px;padding:9px 16px;border-radius:9px;opacity:0;pointer-events:none;transition:.22s;z-index:80;max-width:78%;text-align:center;line-height:1.5}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ============ 侧栏 ============ */
+.side{width:308px;flex:none;font-size:13px;color:var(--ink2);align-self:center}
+.side .side-h{font-size:12.5px;letter-spacing:.04em;color:var(--ink3);margin-bottom:10px}
+.side h3{font-size:16px;color:var(--ink);margin:0 0 8px;font-weight:700;letter-spacing:-.01em}
+.side p{line-height:1.75;margin:0 0 10px}
+.side .grp{padding:18px 0;border-top:1px solid #D3D7CD}
+.side .grp:first-child{border-top:0;padding-top:0}
+.side .nav-list{display:flex;flex-wrap:wrap;gap:6px}
+.side .nav-btn{font-size:12.5px;padding:5px 11px;border-radius:999px;background:#DDE1D7;color:var(--ink)}
+.side .nav-btn:active{background:#D2D7CB}
+.side .tag-demo{display:inline-block;font-size:11.5px;color:#7A5B18;background:#F0E6CB;padding:3px 9px;border-radius:6px;margin-bottom:12px}
+.side code{font-family:var(--num);font-size:12px;background:#DDE1D7;padding:1px 5px;border-radius:4px}
+
+@media (max-width:1080px){ .side{display:none} .stage{gap:0} }
+@media (max-width:520px){
+  .stage{padding:0;display:block}
+  .phone{width:100%;height:100dvh;border-radius:0;padding:0;background:var(--paper);box-shadow:none}
+  .screen{border-radius:0}
+  .notch{display:none}
+  .statusbar{height:calc(28px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top)}
+}
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <!-- ================= 手机 ================= -->
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen">
+
+      <div class="statusbar">
+        <span>9:41</span>
+        <span class="sb-right">
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="none"><rect x="0" y="7" width="3" height="4" rx="1" fill="#17211C"/><rect x="4.5" y="5" width="3" height="6" rx="1" fill="#17211C"/><rect x="9" y="2.5" width="3" height="8.5" rx="1" fill="#17211C"/><rect x="13.5" y="0" width="3" height="11" rx="1" fill="#17211C"/></svg>
+          <svg width="16" height="11" viewBox="0 0 16 11" fill="none"><path d="M8 10.2l2.1-2.3a3 3 0 00-4.2 0L8 10.2z" fill="#17211C"/><path d="M4.2 6.2a5.6 5.6 0 017.6 0" stroke="#17211C" stroke-width="1.3" fill="none"/><path d="M1.6 3.4a9.2 9.2 0 0112.8 0" stroke="#17211C" stroke-width="1.3" fill="none"/></svg>
+          <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="20" height="11" rx="3" stroke="#8D968E"/><rect x="2" y="2" width="14" height="8" rx="2" fill="#17211C"/><path d="M22.5 4v4a2.4 2.4 0 000-4z" fill="#8D968E"/></svg>
+        </span>
+      </div>
+
+      <div class="appbar" id="appbar" style="display:none"></div>
+
+      <main id="main">
+
+        <!-- ================= 视图：首页 ================= -->
+        <section class="view on" id="v-home">
+          <div class="pad">
+            <header class="topbar">
+              <div class="brand">
+                <svg class="logo" viewBox="0 0 32 32" fill="none">
+                  <rect width="32" height="32" rx="9" fill="#1B4E43"/>
+                  <path d="M9 24V14M16 24V9M23 24V17" stroke="#F2F3EF" stroke-width="2.4" stroke-linecap="round"/>
+                </svg>
+                <span class="brand-name">定盘</span>
+                <span class="brand-sub">升学评测</span>
+              </div>
+              <span class="pill">广东 · 物理类</span>
+            </header>
+
+            <h1 class="hero-title">分数会浮动，<br>位次不会。</h1>
+            <p class="lede">把一模、二模成绩换算成全省位次，再拿位次去比对院校专业组的历史投档线——这是广东 3+1+2 志愿填报里，最不容易失手的一步。</p>
+
+            <!-- 成绩卡（未录入） -->
+            <div class="scorecard" id="home-card">
+              <div class="ruler-mini" aria-hidden="true">
+                <i style="left:0"></i><i style="left:12.5%"></i><i style="left:25%"></i><i style="left:37.5%"></i><i style="left:50%"></i><i style="left:62.5%"></i><i style="left:75%"></i><i style="left:87.5%"></i><i style="left:99.6%"></i>
+              </div>
+              <div class="sc-label">我的成绩档案</div>
+              <div class="sc-empty-t">还没有录入成绩</div>
+              <p class="sc-empty-d">填入一模、二模共 12 项分数，约 2 分钟得到冲、稳、保三档完整推荐。</p>
+              <button class="btn btn-primary btn-block" data-go="input">
+                录入一模 · 二模成绩
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h13M13 6l6 6-6 6" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+
+            <div class="stats">
+              <div class="stat"><div class="sv" id="stat-groups">36</div><div class="sl">专业组在库</div></div>
+              <div class="stat"><div class="sv">2023–25</div><div class="sl">投档位次跨度</div></div>
+              <div class="stat"><div class="sv">2 min</div><div class="sl">单次评测耗时</div></div>
+            </div>
+
+            <div class="sec-h"><h2>随时可查</h2><span class="more">四件常用工具</span></div>
+            <div class="entries">
+              <button class="entry" data-act="sheet-ranktable">
+                <span class="et">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 17h18M6 17V9M10 17V11M14 17V7M18 17V13" stroke-linecap="round"/></svg>
+                  一分一段表
+                </span>
+                <span class="ed">分数换算全省位次</span>
+              </button>
+              <button class="entry" data-act="grading">
+                <span class="et">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h9M17 7h3M4 17h3M11 17h9" stroke-linecap="round"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></svg>
+                  志愿梯度检查
+                </span>
+                <span class="ed">相邻志愿位次差是否合理</span>
+              </button>
+              <button class="entry" data-act="sheet-rule">
+                <span class="et">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v4.4M12 15.6v.4" stroke-linecap="round"/></svg>
+                  匹配口径
+                </span>
+                <span class="ed">录取概率是怎么算的</span>
+              </button>
+              <button class="entry" data-go="input">
+                <span class="et">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+                  新的一次评测
+                </span>
+                <span class="ed">换科类或改成绩重测</span>
+              </button>
+            </div>
+
+            <div class="sec-h"><h2>评测怎么做的</h2></div>
+            <div class="steps">
+              <div class="step">
+                <div class="sn">01</div>
+                <div><div class="st">录入两次模考</div><div class="sd">按广东 3+1+2 的六个科目分别填写，系统同时记录两次模考的特控线。</div></div>
+              </div>
+              <div class="step">
+                <div class="sn">02</div>
+                <div><div class="st">线差法换算等效分</div><div class="sd">二模权重更高；用模考特控线与高考特控线的差值，抵消卷面难度波动。</div></div>
+              </div>
+              <div class="step">
+                <div class="sn">03</div>
+                <div><div class="st">位次匹配院校专业组</div><div class="sd">等效分查一分一段表得到位次，与该专业组近三年最低投档位次比较，给出录取概率与冲稳保分档。</div></div>
+              </div>
+            </div>
+
+            <div class="footnote">
+              <b>演示说明</b><br>
+              本页院校、专业组、投档分数与位次均为原型演示数据，不构成填报依据。正式数据需接入广东省教育考试院历年投档统计表与当年招生计划。
+            </div>
+          </div>
+        </section>
+        <!-- ================= 视图：成绩录入 ================= -->
+        <section class="view" id="v-input">
+          <div class="pad">
+            <h2 class="vh">成绩录入</h2>
+            <p class="vh-sub">广东 3+1+2 · 满分 750 · 成绩仅保存在本机</p>
+
+            <div class="fg-h">首选科目 <span class="hint">物理 / 历史二选一，决定你走的队列</span></div>
+            <div class="seg" id="seg-first">
+              <button class="on" data-first="物理">物理</button>
+              <button data-first="历史">历史</button>
+            </div>
+
+            <div class="fg-h">再选科目 <span class="hint">四科中选两科，等级赋分</span></div>
+            <div class="chips" id="chips-second"></div>
+
+            <div class="formcard" id="form-m1">
+              <div class="fc-h">
+                <div class="t">一模成绩</div>
+                <div class="line">模考特控线 <input id="line-m1" type="number" inputmode="numeric" value="495" maxlength="3"></div>
+              </div>
+              <div id="rows-m1"></div>
+              <div class="fc-total"><span>总分（六科）</span><b><span id="tot-m1">0</span><i> / 750</i></b></div>
+            </div>
+
+            <div class="formcard" id="form-m2">
+              <div class="fc-h">
+                <div class="t">二模成绩</div>
+                <div class="line">模考特控线 <input id="line-m2" type="number" inputmode="numeric" value="505" maxlength="3"></div>
+              </div>
+              <div id="rows-m2"></div>
+              <div class="fc-total"><span>总分（六科）</span><b><span id="tot-m2">0</span><i> / 750</i></b></div>
+            </div>
+
+            <div class="formcard">
+              <div class="opt-row" style="padding-top:14px">
+                <div>
+                  <div class="ol">已知全省位次（选填）</div>
+                  <div class="od">有校排、市排换算好的位次时填这里，校准更准</div>
+                </div>
+                <input id="known-rank" type="number" inputmode="numeric" placeholder="例 7600"
+                  style="width:92px;height:34px;border:1px solid var(--line);border-radius:8px;text-align:right;padding:0 9px;font-family:var(--num);font-size:14px;background:#FBFCF8">
+              </div>
+            </div>
+
+            <div class="sticky-cta">
+              <button class="btn btn-primary" id="btn-eval">
+                开始评测
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h13M13 6l6 6-6 6" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= 视图：换算过程 ================= -->
+        <section class="view" id="v-calc">
+          <div class="pad">
+            <h2 class="vh" style="margin-top:26px">正在换算</h2>
+            <p class="vh-sub" id="calc-sub">按广东 3+1+2 口径，把两次模考折成全省位次</p>
+            <div class="calclist" id="calclist">
+              <div class="cl" data-step="0">
+                <div class="ck"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 12.5l5.4 5.5L20 7" stroke-linecap="round"/></svg></div>
+                <div><div class="ct">合成两次模考</div><div class="cd" id="cd-0">一模 0 · 二模 0</div></div>
+              </div>
+              <div class="cl" data-step="1">
+                <div class="ck"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 12.5l5.4 5.5L20 7" stroke-linecap="round"/></svg></div>
+                <div><div class="ct">线差法求等效高考分</div><div class="cd" id="cd-1">—</div></div>
+              </div>
+              <div class="cl" data-step="2">
+                <div class="ck"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 12.5l5.4 5.5L20 7" stroke-linecap="round"/></svg></div>
+                <div><div class="ct">查一分一段表定位次</div><div class="cd" id="cd-2">—</div></div>
+              </div>
+              <div class="cl" data-step="3">
+                <div class="ck"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 12.5l5.4 5.5L20 7" stroke-linecap="round"/></svg></div>
+                <div><div class="ct">匹配院校专业组</div><div class="cd" id="cd-3">—</div></div>
+              </div>
+            </div>
+            <div class="bigresult">
+              <div class="bl">预估全省位次</div>
+              <div class="bv" id="calc-rank">—</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= 视图：评测结果 ================= -->
+        <section class="view" id="v-result">
+          <div class="pad" id="res-body"></div>
+        </section>
+
+        <!-- ================= 视图：院校详情 ================= -->
+        <section class="view" id="v-school">
+          <div class="pad" id="school-body"></div>
+        </section>
+
+        <!-- ================= 视图：志愿表 ================= -->
+        <section class="view" id="v-list">
+          <div class="pad" id="list-body"></div>
+        </section>
+
+        <!-- ================= 视图：我的 ================= -->
+        <section class="view" id="v-me">
+          <div class="pad" id="me-body"></div>
+        </section>
+      </main>
+
+      <nav class="tabbar" id="tabbar">
+        <button class="tab on" data-go="home">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 10.5L12 4l8 6.5V19a1.5 1.5 0 01-1.5 1.5H15v-6h-6v6H5.5A1.5 1.5 0 014 19z" stroke-linecap="round"/></svg>
+          <span class="tb-t">首页</span>
+        </button>
+        <button class="tab" data-go="input">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke-linecap="round"/></svg>
+          <span class="tb-t">评测</span>
+        </button>
+        <button class="tab" data-go="list">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 6h12M8 12h12M8 18h12" stroke-linecap="round"/><circle cx="4.2" cy="6" r="1.2" fill="currentColor" stroke="none"/><circle cx="4.2" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="4.2" cy="18" r="1.2" fill="currentColor" stroke="none"/></svg>
+          <span class="tb-t">志愿表</span>
+        </button>
+        <button class="tab" data-go="me">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4.5 20a7.5 7.5 0 0115 0" stroke-linecap="round"/></svg>
+          <span class="tb-t">我的</span>
+        </button>
+      </nav>
+
+      <div class="mask" id="mask"></div>
+      <div class="sheet" id="sheet">
+        <div class="sh-grab"></div>
+        <div class="sh-head">
+          <span class="t" id="sheet-title">说明</span>
+          <button class="iconbtn" data-act="close-sheet" aria-label="关闭">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <div class="sh-body" id="sheet-body"></div>
+      </div>
+      <div class="toast" id="toast"></div>
+
+    </div>
+  </div>
+
+  <!-- ================= 侧栏说明 ================= -->
+  <aside class="side">
+    <div class="grp">
+      <div class="side-h">交互原型 · 演示数据</div>
+      <h3>定盘 · 升学评测</h3>
+      <p>面向广东新高考 3+1+2（首选物理 / 历史 + 再选两科），把一模、二模成绩换算成全省位次，据此给出冲、稳、保三档院校专业组。</p>
+      <p>左侧手机可直接点击操作，完整走完「录入 → 换算 → 结果 → 院校详情 → 志愿表」。</p>
+      <div class="nav-list">
+        <button class="nav-btn" data-go="home">首页</button>
+        <button class="nav-btn" data-go="input">成绩录入</button>
+        <button class="nav-btn" data-go="calc">换算过程</button>
+        <button class="nav-btn" data-go="result">评测结果</button>
+        <button class="nav-btn" data-go="list">志愿表</button>
+        <button class="nav-btn" data-go="me">我的</button>
+      </div>
+    </div>
+    <div class="grp">
+      <div class="side-h">换算口径</div>
+      <code>等效分 = 0.4 × (一模 + Δ₁) + 0.6 × (二模 + Δ₂)</code>
+      <p style="margin-top:8px">Δ 为模考特控线与 2025 广东特控线（539，示例）的线差。等效分查一分一段表得位次，再与该专业组最低投档位次做比较。</p>
+      <code>P = 1 / (1 + e^((我的位次 − 组位次) / (0.16 × 组位次)))</code>
+      <p style="margin-top:8px">位次越优于投档线，概率越高；P &lt; 50% 记冲，50–82% 记稳，≥ 82% 记保。</p>
+    </div>
+    <div class="grp">
+      <div class="tag-demo">仅原型演示</div>
+      <p>院校、专业、投档分数与位次全部为演示数据，未接入官方投档统计与招生计划，不可用于真实填报。</p>
+    </div>
+  </aside>
+
+</div>
+
+<script src="https://fastly.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js" defer></script>
+<script>
+/* ==================================================================
+   定盘 · 升学评测（广东 3+1+2）交互原型
+   全部院校 / 专业 / 投档分数为演示数据，位次由内置一分一段示例函数换算
+   ================================================================== */
+
+/* ---------- 一分一段示例锚点：分数 -> 累计位次 ---------- */
+const ANCHOR = {
+  physics: [[750,1],[720,30],[700,80],[680,300],[660,900],[640,2200],[620,4800],
+            [600,9000],[580,15000],[560,23000],[540,33000],[520,45000],[500,59000],
+            [480,75000],[450,100000],[420,125000],[400,140000],[350,165000],[300,185000]],
+  history: [[750,1],[700,20],[680,60],[660,150],[640,350],[620,800],[600,1600],
+            [580,2800],[560,4500],[540,7000],[520,10500],[500,15000],[480,20500],
+            [460,27000],[440,34000],[420,40000],[400,45000],[350,52000]]
+};
+const CONTROL_LINE = { '物理':539, '历史':535 };   /* 2025 广东特控线（示例） */
+const TOTAL_MAX = 750;
+
+function rankOf(score, cls){
+  const A = ANCHOR[cls === '历史' ? 'history' : 'physics'];
+  if (score >= A[0][0]) return A[0][1];
+  if (score <= A[A.length-1][0]) return A[A.length-1][1];
+  for (let i=0;i<A.length-1;i++){
+    if (score <= A[i][0] && score >= A[i+1][0]){
+      const t = (A[i][0]-score)/(A[i][0]-A[i+1][0]);
+      const r = Math.pow(10, Math.log10(A[i][1]) + t*(Math.log10(A[i+1][1])-Math.log10(A[i][1])));
+      return Math.round(r);
+    }
+  }
+  return A[A.length-1][1];
+}
+function scoreOf(rank, cls){
+  const A = ANCHOR[cls === '历史' ? 'history' : 'physics'];
+  if (rank <= A[0][1]) return A[0][0];
+  const last = A[A.length-1];
+  if (rank >= last[1]) return last[0];
+  for (let i=0;i<A.length-1;i++){
+    if (rank >= A[i][1] && rank <= A[i+1][1]){
+      const t = (Math.log10(rank)-Math.log10(A[i][1]))/(Math.log10(A[i+1][1])-Math.log10(A[i][1]));
+      return Math.round(A[i][0] + t*(A[i+1][0]-A[i][0]));
+    }
+  }
+  return last[0];
+}
+
+/* ---------- 院校专业组（演示数据） ----------
+   [id, 校名, 专业组代码, 层次标签, 城市, 2025最低分, 选科要求, 专业列表]
+   专业：[名称, 相对组最低分的差值, 计划数, (可选)独立选科要求]            */
+const RAW = {
+  physics: [
+    ['p1','中山大学','203',['985','211','双一流'],'广州',645,'首选物理，再选不限',[
+      ['计算机类',8,140],['电子信息类',5,110],['经济学类',0,70],['临床医学（五年）',10,90,'首选物理，再选化学+生物']]],
+    ['p2','华南理工大学','205',['985','211','双一流'],'广州',632,'首选物理，再选不限',[
+      ['计算机科学与技术',9,120],['建筑学',6,60],['机械类',1,150],['材料类',0,90]]],
+    ['p3','暨南大学','214',['211','双一流'],'广州',615,'首选物理，再选不限',[
+      ['计算机科学与技术',4,80],['金融学',5,70],['新闻学',3,45],['临床医学',8,50,'首选物理，再选化学']]],
+    ['p4','华南师范大学','216',['211','双一流'],'广州',608,'首选物理，再选不限',[
+      ['汉语言文学（师范）',4,80],['心理学',3,60],['计算机科学与技术',2,70],['教育学',0,50]]],
+    ['p5','深圳大学','232',['双非强校','省内'],'深圳',605,'首选物理，再选不限',[
+      ['计算机科学与技术',7,110],['金融学',4,80],['建筑学',3,50],['广告学',0,40]]],
+    ['p6','南方医科大学','206',['省重点','医药'],'广州',600,'首选物理，再选化学',[
+      ['临床医学（八年制）',12,40],['临床医学（五年）',6,120],['护理学',0,60,'首选物理，再选化学或生物']]],
+    ['p7','广州医科大学','201',['省重点','医药'],'广州',590,'首选物理，再选化学',[
+      ['临床医学',7,150],['麻醉学',4,50],['公共事业管理',0,40]]],
+    ['p8','广东外语外贸大学','212',['省重点','语言'],'广州',575,'首选物理，再选不限',[
+      ['英语',5,90],['会计学',4,80],['国际经济与贸易',3,70],['日语',0,40]]],
+    ['p9','广东工业大学','201',['省重点','工科'],'广州',570,'首选物理，再选不限',[
+      ['计算机类',6,200],['自动化类',4,180],['机械设计制造及其自动化',1,220],['工商管理类',0,90]]],
+    ['p10','华南农业大学','218',['双一流'],'广州',565,'首选物理，再选不限',[
+      ['动物医学',5,80,'首选物理，再选化学或生物'],['食品科学与工程',2,90,'首选物理，再选化学'],['风景园林',1,60],['经济学类',0,70]]],
+    ['p11','广州大学','201',['省重点','综合'],'广州',560,'首选物理，再选不限',[
+      ['计算机科学与技术',5,100],['土木工程',3,120],['汉语言文学',2,60],['会计学',0,70]]],
+    ['p12','深圳技术大学','201',['省重点','工科'],'深圳',555,'首选物理，再选不限',[
+      ['数据科学与大数据技术',5,90],['智能制造工程',2,100],['工业设计',0,50]]],
+    ['p13','广东财经大学','202',['省重点','财经'],'广州',545,'首选物理，再选不限',[
+      ['会计学',5,90],['法学',4,80],['金融学',2,70],['工商管理',0,60]]],
+    ['p14','东莞理工学院','201',['省重点','工科'],'东莞',535,'首选物理，再选不限',[
+      ['计算机科学与技术',5,80],['机械设计制造及其自动化',4,100],['会计学',1,60],['化学工程与工艺',0,50]]],
+    ['p15','佛山大学','208',['公办本科'],'佛山',520,'首选物理，再选不限',[
+      ['口腔医学',6,40,'首选物理，再选化学'],['机械工程',2,90],['会计学',0,60],['汉语言文学',1,50]]],
+    ['p16','广东技术师范大学','204',['公办本科','师范'],'广州',515,'首选物理，再选不限',[
+      ['计算机科学与技术（师范）',4,70],['电子信息工程',2,80],['学前教育',0,50]]],
+    ['p17','广东金融学院','203',['公办本科','财经'],'广州',513,'首选物理，再选不限',[
+      ['金融学',4,90],['会计学',2,70],['信用管理',0,40]]],
+    ['p18','仲恺农业工程学院','205',['公办本科'],'广州',508,'首选物理，再选化学或生物',[
+      ['食品质量与安全',1,70],['园艺',3,60],['市场营销',0,50]]],
+    ['p19','广东海洋大学','201',['公办本科'],'湛江',505,'首选物理，再选不限',[
+      ['食品科学与工程',3,60],['海洋渔业科学与技术',2,50],['船舶与海洋工程',1,40],['会计学',0,50]]],
+    ['p20','岭南师范学院','207',['公办本科','师范'],'湛江',495,'首选物理，再选不限',[
+      ['小学教育（师范）',3,60],['汉语言文学（师范）',1,50],['计算机科学与技术',0,60]]],
+    ['p21','珠海科技学院','206',['民办本科'],'珠海',480,'首选物理，再选不限',[
+      ['计算机科学与技术',3,80],['会计学',1,70],['视觉传达设计',0,40]]],
+    ['p22','广州软件学院','201',['民办本科'],'广州',465,'首选物理，再选不限',[
+      ['软件工程',3,90],['网络工程',1,60],['电子商务',0,50]]],
+    ['p23','广东白云学院','202',['民办本科'],'广州',450,'首选物理，再选不限',[
+      ['机械设计制造及其自动化',2,70],['工商管理',1,60],['学前教育',0,40]]],
+    ['p24','中山大学','204',['985','211','双一流'],'广州',638,'首选物理，再选不限',[
+      ['计算机科学与技术',6,80],['软件工程',5,60],['数学类',3,50],['物理学类',1,45]]],
+    ['p25','中山大学','205',['985','211','双一流'],'广州',621,'首选物理，再选化学',[
+      ['临床医学（五年）',4,60],['口腔医学',6,30],['药学',0,40]]],
+    ['p26','华南理工大学','206',['985','211','双一流'],'广州',618,'首选物理，再选化学',[
+      ['化学工程与工艺',3,80],['材料科学与工程',2,90],['食品科学与工程',0,50]]],
+    ['p27','暨南大学','215',['211','双一流'],'广州',602,'首选物理，再选不限',[
+      ['会计学',4,60],['法学',3,40],['国际经济与贸易',2,50],['工商管理',0,45]]],
+    ['p28','华南师范大学','217',['211','双一流'],'广州',596,'首选物理，再选不限',[
+      ['数学与应用数学（师范）',4,80],['物理学（师范）',2,70],['教育技术学',0,40]]],
+    ['p29','深圳大学','229',['双非强校','省内'],'深圳',588,'首选物理，再选化学',[
+      ['临床医学',5,50],['生物医学工程',2,45],['药学',1,40]]],
+    ['p30','广东工业大学','202',['省重点','工科'],'广州',552,'首选物理，再选不限',[
+      ['电子信息类',3,150],['材料类',0,120],['工业设计',1,60]]],
+    ['p31','华南农业大学','219',['双一流'],'广州',540,'首选物理，再选不限',[
+      ['园林',2,60],['食品质量与安全',1,70],['林学',0,50]]],
+    ['p32','广州大学','202',['省重点','综合'],'广州',540,'首选物理，再选化学',[
+      ['化学（师范）',3,50],['生物科学（师范）',2,45],['环境工程',0,60]]],
+    ['p33','广东财经大学','203',['省重点','财经'],'广州',528,'首选物理，再选不限',[
+      ['数据科学与大数据技术',3,60],['电子商务',1,50],['物流管理',0,40]]],
+    ['p34','广东医科大学','201',['公办本科','医药'],'东莞',550,'首选物理，再选化学',[
+      ['临床医学',4,100],['医学影像学',2,50],['护理学',0,60]]]
+  ],
+  history: [
+    ['h1','中山大学','201',['985','211','双一流'],'广州',630,'首选历史，再选不限',[
+      ['法学',4,50],['汉语言文学',3,60],['工商管理类',1,80],['哲学',0,30]]],
+    ['h2','华南理工大学','203',['985','211','双一流'],'广州',615,'首选历史，再选不限',[
+      ['法学',4,40],['工商管理类',2,60],['商务英语',0,40]]],
+    ['h3','暨南大学','211',['211','双一流'],'广州',600,'首选历史，再选不限',[
+      ['新闻学',3,60],['法学',4,50],['会计学',2,60],['汉语言文学',1,40]]],
+    ['h4','华南师范大学','213',['211','双一流'],'广州',595,'首选历史，再选不限',[
+      ['汉语言文学（师范）',4,90],['历史学（师范）',2,70],['教育学',0,50],['心理学',1,40]]],
+    ['h5','深圳大学','230',['双非强校','省内'],'深圳',590,'首选历史，再选不限',[
+      ['法学',4,60],['广告学',2,50],['工商管理',0,70],['英语',1,40]]],
+    ['h6','广东外语外贸大学','211',['省重点','语言'],'广州',570,'首选历史，再选不限',[
+      ['翻译',5,50],['英语',4,90],['国际经济与贸易',1,70],['日语',0,40]]],
+    ['h7','华南农业大学','215',['双一流'],'广州',555,'首选历史，再选不限',[
+      ['汉语言文学',3,60],['法学',2,70],['社会学',0,40]]],
+    ['h8','广州大学','202',['省重点','综合'],'广州',553,'首选历史，再选不限',[
+      ['汉语言文学（师范）',3,70],['法学',2,60],['应用心理学',0,40]]],
+    ['h9','广东财经大学','203',['省重点','财经'],'广州',540,'首选历史，再选不限',[
+      ['法学',4,90],['会计学',2,80],['电子商务',0,50]]],
+    ['h10','广东技术师范大学','205',['公办本科','师范'],'广州',520,'首选历史，再选不限',[
+      ['汉语言文学（师范）',2,70],['学前教育（师范）',3,60],['旅游管理与服务教育',0,40]]],
+    ['h11','佛山大学','209',['公办本科'],'佛山',505,'首选历史，再选不限',[
+      ['汉语言文学（师范）',3,60],['法学',1,50],['学前教育',0,40]]],
+    ['h12','岭南师范学院','206',['公办本科','师范'],'湛江',495,'首选历史，再选不限',[
+      ['小学教育（师范）',2,70],['历史学（师范）',1,60],['思想政治教育',0,50]]],
+    ['h13','珠海科技学院','207',['民办本科'],'珠海',470,'首选历史，再选不限',[
+      ['会计学',2,60],['汉语言文学',1,70],['英语',0,50]]],
+    ['h14','广东白云学院','203',['民办本科'],'广州',455,'首选历史，再选不限',[
+      ['工商管理',1,60],['学前教育',0,50],['商务英语',0,40]]],
+    ['h15','中山大学','202',['985','211','双一流'],'广州',618,'首选历史，再选不限',[
+      ['汉语言文学',3,50],['历史学',2,40],['社会学',0,30]]],
+    ['h16','华南理工大学','204',['985','211','双一流'],'广州',605,'首选历史，再选不限',[
+      ['新闻传播学类',3,30],['法学',2,40],['行政管理',0,35]]],
+    ['h17','暨南大学','212',['211','双一流'],'广州',585,'首选历史，再选不限',[
+      ['汉语言文学',2,50],['广告学',1,40],['国际商务',0,35]]],
+    ['h18','华南师范大学','214',['211','双一流'],'广州',580,'首选历史，再选不限',[
+      ['学前教育（师范）',3,50],['特殊教育（师范）',1,40],['教育学',0,45]]],
+    ['h19','广东外语外贸大学','213',['省重点','语言'],'广州',598,'首选历史，再选不限',[
+      ['商务英语',2,60],['翻译',3,30],['国际商务',0,40]]],
+    ['h20','深圳大学','228',['双非强校','省内'],'深圳',597,'首选历史，再选不限',[
+      ['汉语言文学',2,40],['行政管理',1,35],['社会学',0,30]]]
+  ]
+};
+
+/* 转成对象，并从同一套一分一段函数回算位次，保证内部自洽 */
+function buildData(){
+  const out = {};
+  ['physics','history'].forEach(k=>{
+    const cls = k === 'physics' ? '物理' : '历史';
+    out[k] = RAW[k].map(([id,name,code,tier,city,score,req,mj])=>{
+      const gRank = rankOf(score, cls);
+      return {
+        id, name, code, tier, city, score, req, cls, gRank,
+        majors: mj.map(([n,d,plan,r])=>({
+          n, plan, req: r || req, score: score + d, rank: rankOf(score + d, cls)
+        }))
+      };
+    });
+  });
+  return out;
+}
+const DATA = buildData();
+
+/* ---------- 全局状态 ---------- */
+const S = {
+  cls: '物理',
+  second: ['化学','生物'],
+  m1: [105,110,112,78,74,71],
+  m2: [112,118,116,82,79,76],
+  line1: 495,
+  line2: 505,
+  knownRank: null,
+  hasScore: false,
+  result: null,
+  tier: '稳',
+  list: [],          /* 志愿表：专业组 id */
+  schoolId: null
+};
+const SECOND_OPTS = ['化学','生物','政治','地理'];
+const SUBJ_MAX = [150,150,150,100,100,100];
+
+/* ---------- 工具 ---------- */
+const nf = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+const pct = p => Math.round(p*100);
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const $ = id => document.getElementById(id);
+
+function subjectNames(){
+  return ['语文','数学','外语',S.cls,S.second[0],S.second[1]];
+}
+function totalOf(arr){ return arr.reduce((a,b)=>a+(Number(b)||0),0); }
+
+/* ---------- 路由 ---------- */
+const VIEWS = ['home','input','calc','result','school','list','me'];
+let chart = null;
+const TITLE = {calc:'成绩换算', result:'评测结果', school:'院校专业组详情'};
+
+function go(name, opt){
+  if (name === 'calc') { startCalc(); return; }
+  VIEWS.forEach(v=>{ const el = $('v-'+v); if (el) el.classList.remove('on'); });
+  const el = $('v-'+name); if (!el) return;
+  el.classList.add('on');
+  $('main').scrollTop = 0;
+
+  /* appbar */
+  const ab = $('appbar');
+  if (TITLE[name]) {
+    ab.style.display = 'flex';
+    ab.innerHTML = `<button class="iconbtn" data-back="${name==='school'?'result':'home'}">${ICON.back}</button>
+      <span class="ab-title">${TITLE[name]}</span>`;
+  } else { ab.style.display = 'none'; }
+
+  /* 底部导航高亮 */
+  const tabMap = {home:'home', input:'input', calc:'input', result:'input', school:'input', list:'list', me:'me'};
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.classList.toggle('on', t.dataset.go === tabMap[name]);
+  });
+
+  if (name === 'home') renderHome();
+  if (name === 'input') renderInput();
+  if (name === 'result') renderResult();
+  if (name === 'list') renderList();
+  if (name === 'me') renderMe();
+  if (name === 'school') renderSchool();
+  if (name !== 'school' && chart) { try{ chart.dispose(); }catch(e){} chart = null; }
+}
+
+const ICON = {
+  back: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M15 5l-7 7 7 7" stroke-linecap="round"/></svg>',
+  up: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V6M6 12l6-6 6 6" stroke-linecap="round"/></svg>',
+  down: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v13M18 12l-6 6-6-6" stroke-linecap="round"/></svg>',
+  trash: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5h6v2M7 7l1 13h8l1-13" stroke-linecap="round"/></svg>',
+  chev: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7" stroke-linecap="round"/></svg>'
+};
+
+/* ---------- 录入页渲染 ---------- */
+function renderInput(){
+  document.querySelectorAll('#seg-first button').forEach(b=>{
+    b.classList.toggle('on', b.dataset.first === S.cls);
+  });
+  const chips = $('chips-second');
+  chips.innerHTML = SECOND_OPTS.map(o=>{
+    const on = S.second.includes(o);
+    const full = S.second.length >= 2 && !on;
+    return `<button class="chip ${on?'on':''}" data-second="${o}" ${full?'disabled':''}>${o}</button>`;
+  }).join('');
+  renderRows('m1'); renderRows('m2');
+  $('line-m1').value = S.line1;
+  $('line-m2').value = S.line2;
+  $('known-rank').value = S.knownRank || '';
+}
+
+function renderRows(key){
+  const names = subjectNames();
+  const wrap = $('rows-'+(key==='m1'?'m1':'m2'));
+  wrap.innerHTML = names.map((n,i)=>`
+    <div class="srow">
+      <div class="sn">${n}${i>=3?`<em>${i===3?'首选':'再选'}</em>`:''}</div>
+      <input type="number" inputmode="numeric" data-m="${key}" data-i="${i}"
+             value="${S[key][i]}" min="0" max="${SUBJ_MAX[i]}">
+      <div class="u">/${SUBJ_MAX[i]}</div>
+    </div>`).join('');
+  $('tot-'+key).textContent = totalOf(S[key]);
+}
+
+/* ---------- 计算 ---------- */
+function calc(){
+  const cls = S.cls;
+  const line = CONTROL_LINE[cls];
+  const t1 = totalOf(S.m1), t2 = totalOf(S.m2);
+  const d1 = line - S.line1, d2 = line - S.line2;
+  const eq1 = t1 + d1, eq2 = t2 + d2;
+  let eq = clamp(Math.round(eq1*0.4 + eq2*0.6), 0, 750);
+
+  const dist = Math.abs(t1 - t2);
+  const margin = Math.round(dist/2) + 4;
+  let eqLow = clamp(eq - margin, 0, 750), eqHigh = clamp(eq + margin, 0, 750);
+
+  let rank, rankLow, rankHigh;
+  if (S.knownRank && S.knownRank > 0){
+    rank = Math.round(S.knownRank);
+    eq = scoreOf(rank, cls);
+    eqLow = eq - margin; eqHigh = eq + margin;
+    rankLow = rankOf(eqHigh, cls);
+    rankHigh = rankOf(eqLow, cls);
+  } else {
+    rank = rankOf(eq, cls);
+    rankLow = rankOf(eqHigh, cls);
+    rankHigh = rankOf(eqLow, cls);
+  }
+
+  const groups = DATA[cls === '物理' ? 'physics' : 'history'];
+  const scored = groups.map(g=>{
+    const p = clamp(1/(1+Math.exp((rank - g.gRank)/Math.max(g.gRank*0.16, 80))), 0.03, 0.97);
+    return Object.assign({}, g, {
+      p,
+      band: p < 0.5 ? '冲' : (p < 0.82 ? '稳' : '保'),
+      gap: g.gRank - rank
+    });
+  });
+
+  /* 每档最多保留 10 个「离我最近」的专业组：位次差太远的没有参考价值 */
+  const buckets = {'冲':[],'稳':[],'保':[]};
+  scored.forEach(m=>buckets[m.band].push(m));
+  ['冲','稳','保'].forEach(k=>{
+    buckets[k].sort((a,b)=>Math.abs(Math.log(a.gRank/rank)) - Math.abs(Math.log(b.gRank/rank)));
+    buckets[k] = buckets[k].slice(0,10);
+    /* 冲：先列最有希望命中的；稳保：先列层次最好的 */
+    buckets[k].sort(k === '冲' ? (a,b)=>b.p-a.p : (a,b)=>a.gRank-b.gRank);
+  });
+  const matches = buckets['冲'].concat(buckets['稳'], buckets['保']);
+
+  return {eq, eqLow, eqHigh, rank, rankLow, rankHigh, t1, t2, eq1, eq2, d1, d2, margin, matches, cls};
+}
+
+/* ---------- 换算过程动画 ---------- */
+let calcTimer = [];
+function startCalc(){
+  VIEWS.forEach(v=>{ const el=$('v-'+v); if(el) el.classList.remove('on'); });
+  $('v-calc').classList.add('on');
+  $('main').scrollTop = 0;
+  $('appbar').style.display = 'none';
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.go==='input'));
+
+  const r = calc();
+  S.result = r;
+  S.hasScore = true;
+
+  $('cd-0').textContent = `一模 ${r.t1} · 二模 ${r.t2} · 二模权重 60%`;
+  $('cd-1').textContent = `线差 ${r.d1>=0?'+':''}${r.d1} / ${r.d2>=0?'+':''}${r.d2} → ${r.eq} 分`;
+  $('cd-2').textContent = `${r.eq} 分 → 位次 ${nf(r.rank)}`;
+  $('cd-3').textContent = `${r.matches.length} 个专业组参与比对`;
+  $('calc-rank').textContent = nf(r.rank);
+
+  document.querySelectorAll('#calclist .cl').forEach(el=>el.classList.remove('done'));
+  calcTimer.forEach(t=>clearTimeout(t));
+  calcTimer = [];
+  for (let i=0;i<4;i++){
+    calcTimer.push(setTimeout(()=>{
+      const el = document.querySelector('#calclist .cl[data-step="'+i+'"]');
+      if (el) el.classList.add('done');
+    }, 420 + i*340));
+  }
+  calcTimer.push(setTimeout(()=>{
+    if ($('v-calc').classList.contains('on')) go('result');
+  }, 420 + 4*340 + 120));
+}
+/* ================= 首页成绩卡 ================= */
+function renderHome(){
+  const pill = document.querySelector('.pill');
+  if (pill) pill.textContent = `广东 · ${S.cls}类`;
+  const card = $('home-card');
+  if (!card) return;
+  if (!S.hasScore || !S.result){
+    card.innerHTML = `
+      <div class="ruler-mini" aria-hidden="true">
+        <i style="left:0"></i><i style="left:12.5%"></i><i style="left:25%"></i><i style="left:37.5%"></i>
+        <i style="left:50%"></i><i style="left:62.5%"></i><i style="left:75%"></i><i style="left:87.5%"></i><i style="left:99.6%"></i>
+      </div>
+      <div class="sc-label">我的成绩档案</div>
+      <div class="sc-empty-t">还没有录入成绩</div>
+      <p class="sc-empty-d">填入一模、二模共 12 项分数，约 2 分钟得到冲、稳、保三档完整推荐。</p>
+      <button class="btn btn-primary btn-block" data-go="input">
+        录入一模 · 二模成绩
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h13M13 6l6 6-6 6" stroke-linecap="round"/></svg>
+      </button>`;
+    return;
+  }
+  const r = S.result;
+  card.innerHTML = `
+    <div class="sc-label">我的成绩档案 · ${S.cls}类 · 再选 ${S.second.join(' / ')}</div>
+    <div class="sc-row">
+      <div>
+        <div class="sc-big">${r.eq}<span class="sc-unit">等效分</span></div>
+        <div class="sc-meta" style="margin-top:8px">一模 ${r.t1} · 二模 ${r.t2}　预估位次 <b>${nf(r.rank)}</b></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-ghost btn-sm" style="flex:1" data-go="input">重新录入</button>
+      <button class="btn btn-primary btn-sm" style="flex:1" data-go="result">查看评测结果</button>
+    </div>`;
+}
+
+/* ================= 结果页 ================= */
+const TIER_COLOR = {'冲':'#B4573A','稳':'#2F6C8A','保':'#4A7C59'};
+const TIER_CLASS = {'冲':'rush','稳':'stable','保':'safe'};
+const TIER_DESC = {
+  '冲':'位次优于该组投档线的把握不足一半，可以放前几个志愿试一次，落榜不影响后续。',
+  '稳':'你的位次与近年投档线基本持平，是这个分数段最值得填的一档。',
+  '保':'位次明显优于投档线，用来兜底，避免滑档。'
+};
+
+const AX_MIN = 200, AX_MAX = 200000;
+function axPct(v){
+  const a = Math.log10(AX_MIN), b = Math.log10(AX_MAX);
+  return clamp((Math.log10(clamp(v,AX_MIN,AX_MAX))-a)/(b-a)*100, 0, 100);
+}
+function trackGradient(p){
+  const a = Math.max(1.5, p-34), b = Math.max(2.5, p-12), c = Math.min(98.5, p+12);
+  return `linear-gradient(90deg,
+    rgba(164,78,48,.92) 0%,
+    rgba(180,87,58,.42) ${a}%,
+    rgba(140,166,185,.5) ${b}%,
+    rgba(47,108,138,.92) ${p}%,
+    rgba(116,152,127,.5) ${c}%,
+    rgba(74,124,89,.9) 100%)`;
+}
+function rankRuler(r){
+  const p = axPct(r.rank);
+  const lo = axPct(r.rankHigh), hi = axPct(r.rankLow);
+  const ticks = [[500,'500'],[1000,'1千'],[5000,'5千'],[10000,'1万'],[50000,'5万'],[100000,'10万'],[200000,'20万']];
+  const labStyle = p < 14 ? 'left:0;transform:none' : (p > 86 ? 'right:0;left:auto;transform:none' : `left:${p}%;transform:translateX(-50%)`);
+  return `
+  <div class="rankbar">
+    <div class="rb-head">
+      <span class="t">位次尺</span>
+      <span class="rb-legend">
+        <span><i class="lg-dot" style="background:#B4573A"></i>冲</span>
+        <span><i class="lg-dot" style="background:#2F6C8A"></i>稳</span>
+        <span><i class="lg-dot" style="background:#4A7C59"></i>保</span>
+      </span>
+    </div>
+    <div class="track-wrap">
+      <div class="track" style="background:${trackGradient(p)}">
+        <div style="position:absolute;top:0;bottom:0;left:${Math.min(lo,hi)}%;width:${Math.abs(hi-lo)}%;background:rgba(23,33,28,.14)"></div>
+      </div>
+      <div class="marker" style="left:${p}%">
+        <div class="marker-lab" style="${labStyle}">我的位次 ${nf(r.rank)}</div>
+      </div>
+      <div class="ticks">${ticks.map(([v,t])=>`<span style="left:${axPct(v)}%">${t}</span>`).join('')}</div>
+    </div>
+    <div class="zone-lab"><span>← 位次更靠前 · 更难录</span><span>位次更靠后 · 更稳 →</span></div>
+  </div>`;
+}
+
+function schoolCard(m){
+  const gap = m.gRank - (S.result ? S.result.rank : 0);
+  const gapTxt = gap > 0 ? '+' + nf(gap) : (gap < 0 ? '−' + nf(-gap) : '±0');
+  const tags = m.tier.map(t=>`<span class="tag ${['985','211','双一流'].includes(t)?'key':''}">${t}</span>`).join('');
+  return `
+  <button class="scard" data-school="${m.id}">
+    <div class="scard-top">
+      <div style="min-width:0">
+        <div class="sc-name">${m.name}</div>
+        <div class="sc-sub">${m.code} 专业组 · ${m.city} · ${m.req}</div>
+        <div class="sc-tags">${tags}<span class="tag ${TIER_CLASS[m.band]}">${m.band}</span></div>
+      </div>
+      <div class="sc-prob">
+        <div class="pv" style="color:${TIER_COLOR[m.band]}">${pct(m.p)}<i>%</i></div>
+        <div class="pl">录取概率</div>
+      </div>
+    </div>
+    <div class="scard-bot">
+      <div class="kv"><div class="k">2025 最低分</div><div class="v">${m.score}</div></div>
+      <div class="kv"><div class="k">最低位次</div><div class="v">${nf(m.gRank)}</div></div>
+      <div class="kv"><div class="k">位次差</div><div class="v" style="color:${gap>=0?'#4A7C59':'#B4573A'}">${gapTxt}</div></div>
+      <div class="kv"><div class="k">计划专业</div><div class="v">${m.majors.length}</div></div>
+    </div>
+  </button>`;
+}
+
+function renderResult(){
+  const r = S.result || calc();
+  S.result = r;
+  const counts = {'冲':0,'稳':0,'保':0};
+  r.matches.forEach(m=>counts[m.band]++);
+  const shown = r.matches.filter(m=>m.band===S.tier);
+
+  $('res-body').innerHTML = `
+    <div class="res-top">
+      <div>
+        <div class="res-score">${r.eq}<sub>等效分</sub></div>
+        <div class="res-cap">一模 ${r.t1} · 二模 ${r.t2}　线差修正 ${r.d1>=0?'+':''}${r.d1} / ${r.d2>=0?'+':''}${r.d2}</div>
+      </div>
+      <div class="res-badge">
+        <div class="rb-n">${nf(r.rank)}</div>
+        <div class="rb-l">预估全省位次</div>
+      </div>
+    </div>
+
+    <div class="res-meta">
+      <div class="m"><div class="mv">${r.eqLow}–${r.eqHigh}</div><div class="ml">分数波动区间</div></div>
+      <div class="m"><div class="mv">${nf(r.rankLow)}–${nf(r.rankHigh)}</div><div class="ml">对应位次区间</div></div>
+      <div class="m"><div class="mv">${r.cls}类</div><div class="ml">科类口径 ${S.second.join('/')}</div></div>
+    </div>
+
+    ${rankRuler(r)}
+
+    <div class="rtabs">
+      ${['冲','稳','保'].map(t=>`
+        <button class="rtab ${S.tier===t?'on':''}" data-tier="${t}">${t}<span class="n">${counts[t]}</span></button>`).join('')}
+    </div>
+    <div class="tier-note">${TIER_DESC[S.tier]}</div>
+
+    ${shown.length ? shown.map(schoolCard).join('') : `<div class="empty">这个档位暂时没有匹配到专业组<br>可以放宽区间或调整成绩试试</div>`}
+
+    <div class="footnote">
+      <b>口径说明</b><br>
+      等效分由两次模考的线差法合成，二模权重 60%；位次按内置示例一分一段表换算，再与各专业组 2025 最低投档位次比较得出录取概率。<br>
+      全部院校与分数均为演示数据，不构成填报依据。
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-ghost btn-sm" style="flex:1" data-act="sheet-rule">看匹配口径</button>
+      <button class="btn btn-primary btn-sm" style="flex:1" data-go="list">去排志愿表</button>
+    </div>
+    <div style="height:6px"></div>`;
+}
+
+/* ================= 院校详情 ================= */
+function seeded(str){
+  let h = 0;
+  for (let i=0;i<str.length;i++) h = (h*31 + str.charCodeAt(i)) % 9973;
+  return (h % 100)/100;
+}
+function renderSchool(){
+  const all = DATA[S.cls==='物理'?'physics':'history'];
+  const g = all.find(x=>x.id===S.schoolId);
+  if (!g){ $('school-body').innerHTML = '<div class="empty">院校不存在</div>'; return; }
+  const r = S.result || calc();
+  const p = clamp(1/(1+Math.exp((r.rank-g.gRank)/Math.max(g.gRank*0.16,80))),0.03,0.97);
+  const tier = p<0.5?'冲':(p<0.82?'稳':'保');
+  const gap = g.gRank - r.rank;
+  const inList = S.list.includes(g.id);
+
+  const tags = g.tier.map(t=>`<span class="tag ${['985','211','双一流'].includes(t)?'key':''}">${t}</span>`).join('');
+  const mj = g.majors.map(m=>{
+    const p2 = clamp(1/(1+Math.exp((r.rank-m.rank)/Math.max(m.rank*0.16,80))),0.03,0.97);
+    return `<button class="mj" data-major="${m.n}">
+      <div class="n">${m.n}<em>${m.req}</em></div>
+      <div class="p">${m.plan}</div>
+      <div class="r">${nf(m.rank)}<em style="display:block;font-style:normal;font-size:10px;color:${p2>=0.5?'#4A7C59':'#B4573A'}">${pct(p2)}%</em></div>
+    </button>`;
+  }).join('');
+
+  $('school-body').innerHTML = `
+    <div class="det-head">
+      <div class="det-name">${g.name}</div>
+      <div class="det-tags">${tags}<span class="tag ${TIER_CLASS[tier]}">${tier}</span></div>
+      <div class="det-city">${g.city} · ${g.code} 专业组<span>${g.req}</span></div>
+    </div>
+
+    <div class="prob-block">
+      <div class="pb-top">
+        <div><div class="pl">按当前成绩，录取概率</div></div>
+        <div class="pv" style="color:${TIER_COLOR[tier]}">${pct(p)}<span style="font-size:13px">%</span></div>
+      </div>
+      <div class="track" style="background:${trackGradient(axPct(r.rank))};margin-top:14px;height:6px">
+        <div style="position:absolute;top:0;bottom:0;left:${Math.min(axPct(r.rank),axPct(g.gRank))}%;width:${Math.abs(axPct(r.rank)-axPct(g.gRank))}%;background:rgba(23,33,28,.25)"></div>
+      </div>
+      <div class="pb-desc">
+        我的位次 <b style="font-family:var(--num);color:var(--ink)">${nf(r.rank)}</b>　该组最低投档位次
+        <b style="font-family:var(--num);color:var(--ink)">${nf(g.gRank)}</b>　位次差
+        <b style="font-family:var(--num);color:${gap>=0?'#4A7C59':'#B4573A'}">${gap>=0?'+':'−'}${nf(Math.abs(gap))}</b>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="cc-h"><span class="t">近三年最低投档位次</span><span class="s">2023–2025 · 虚线 ${nf(r.rank)}</span></div>
+      <div id="chart"></div>
+    </div>
+
+    <div class="sec-h" style="margin:22px 0 10px"><h2>组内专业</h2><span class="more">${g.majors.length} 个 · 共 ${g.majors.reduce((a,b)=>a+b.plan,0)} 个计划</span></div>
+    <div class="majors">
+      <div class="mj-h"><span>专业 / 选科要求</span><span>计划</span><span>2025 位次</span></div>
+      ${mj}
+    </div>
+
+    <div class="det-note">
+      专业位次由专业录取最低分换算，是组内参考值；实际录取以广东省教育考试院投档结果为准。本页数据仅用于原型演示。
+    </div>
+
+    <div class="sticky-cta">
+      ${inList
+        ? `<button class="btn btn-ghost" data-go="list">已在志愿表 · 查看</button>`
+        : `<button class="btn btn-primary" data-add="${g.id}">加入志愿表</button>`}
+    </div>`;
+  drawChart(g, r);
+}
+
+function drawChart(g, r){
+  const el = $('chart');
+  if (!el) return;
+  if (chart){ try{ chart.dispose(); }catch(e){} chart = null; }
+  const s = seeded(g.id);
+  const y23 = Math.round(g.gRank*(1.02 + 0.08*s));
+  const y24 = Math.round(g.gRank*(1.005 + 0.03*s));
+  const y25 = g.gRank;
+  if (!window.echarts){ el.innerHTML = svgTrend([y23,y24,y25], r.rank); return; }
+  chart = echarts.init(el, null, {renderer:'canvas'});
+  chart.setOption({
+    animationDuration: 600,
+    grid:{left:44,right:16,top:22,bottom:22},
+    xAxis:{
+      type:'category', data:['2023','2024','2025'],
+      axisLine:{lineStyle:{color:'#DCDFD7'}}, axisTick:{show:false},
+      axisLabel:{color:'#8D968E',fontSize:10,fontFamily:'JetBrains Mono'}
+    },
+    yAxis:{
+      type:'value', inverse:true, scale:true,
+      splitNumber: 3,
+      splitLine:{lineStyle:{color:'#EDEFE9'}},
+      axisLabel:{color:'#8D968E',fontSize:9,fontFamily:'JetBrains Mono',
+        formatter:v=> v>=10000 ? (v/10000)+'万' : v}
+    },
+    series:[{
+      type:'line', data:[y23,y24,y25], smooth:false, symbol:'circle', symbolSize:6,
+      lineStyle:{color:'#1B4E43',width:1.6},
+      itemStyle:{color:'#1B4E43'},
+      label:{show:true,position:'top',distance:6,color:'#17211C',fontSize:9,fontFamily:'JetBrains Mono',
+        formatter:p=> p.dataIndex===2 ? p.value.toLocaleString() : ''},
+      markLine:{
+        silent:true, symbol:'none',
+        lineStyle:{color:'#A9812F',type:'dashed',width:1},
+        label:{show:false},
+        data:[{yAxis:r.rank}]
+      }
+    }]
+  });
+}
+
+/* 无图表库时的降级折线（保证离线也能看） */
+function svgTrend(vals, myRank){
+  const W = 320, H = 138, pl = 34, pr = 14, pt = 20, pb = 26;
+  const lo = Math.min(...vals, myRank)*0.9, hi = Math.max(...vals, myRank)*1.1;
+  const X = i => pl + i*(W-pl-pr)/2;
+  const Y = v => pt + (v-lo)/(hi-lo)*(H-pt-pb);
+  const pts = vals.map((v,i)=>`${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+  const labels = ['2023','2024','2025'];
+  const grid = [0,1,2,3].map(i=>`<line x1="${pl}" y1="${pt+i*(H-pt-pb)/3}" x2="${W-pr}" y2="${pt+i*(H-pt-pb)/3}" stroke="#EDEFE9"/>`).join('');
+  const dots = vals.map((v,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="3.2" fill="#1B4E43"/>`).join('');
+  const years = labels.map((l,i)=>`<text x="${X(i).toFixed(1)}" y="${H-8}" text-anchor="middle" font-size="9" fill="#8D968E" font-family="JetBrains Mono,monospace">${l}</text>`).join('');
+  const myY = Y(Math.max(lo, Math.min(hi, myRank)));
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="138" preserveAspectRatio="xMidYMid meet" role="img" aria-label="近三年最低投档位次走势">
+    ${grid}
+    <polyline points="${pts}" fill="none" stroke="#1B4E43" stroke-width="1.6"/>
+    ${dots}
+    <line x1="${pl}" y1="${myY.toFixed(1)}" x2="${W-pr}" y2="${myY.toFixed(1)}" stroke="#A9812F" stroke-dasharray="3 3"/>
+    <text x="${W-pr}" y="${(myY-5).toFixed(1)}" text-anchor="end" font-size="9" fill="#A9812F">我的位次 ${nf(myRank)}</text>
+    <text x="${X(2)-9}" y="${(Y(vals[2])-7).toFixed(1)}" text-anchor="end" font-size="9" fill="#17211C" font-family="JetBrains Mono,monospace">${nf(vals[2])}</text>
+    ${years}
+  </svg>`;
+}
+/* ================= 志愿表 ================= */
+function groupById(id){
+  return DATA.physics.find(x=>x.id===id) || DATA.history.find(x=>x.id===id) || null;
+}
+const LETTER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+function renderList(){
+  const items = S.list.map(groupById).filter(Boolean);
+  if (!items.length){
+    $('list-body').innerHTML = `
+      <h2 class="vh">我的志愿表</h2>
+      <p class="vh-sub">把冲、稳、保排成一条有梯度的序列，比单纯收藏院校更有用。</p>
+      <div class="empty" style="padding-top:70px">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C3C9BE" stroke-width="1.4" style="margin-bottom:14px">
+          <path d="M8 6h12M8 12h12M8 18h12" stroke-linecap="round"/>
+          <circle cx="4.2" cy="6" r="1.2" fill="#C3C9BE"/><circle cx="4.2" cy="12" r="1.2" fill="#C3C9BE"/><circle cx="4.2" cy="18" r="1.2" fill="#C3C9BE"/>
+        </svg>
+        <div>还没有添加院校专业组</div>
+        <div style="font-size:12px;margin-top:6px">先做一次评测，再从结果页把院校加进来</div>
+      </div>
+      <div style="padding:0 24px"><button class="btn btn-primary" data-go="input">去录入成绩</button></div>`;
+    return;
+  }
+
+  const r = S.result || calc();
+  const ranks = items.map(x=>x.gRank);
+  const span = Math.max(...ranks) - Math.min(...ranks);
+
+  let overlap = 0;
+  for (let i=1;i<items.length;i++){
+    if (Math.abs(items[i].gRank - items[i-1].gRank) < items[i-1].gRank*0.05) overlap++;
+  }
+  const tiers = items.map(g=>{
+    const p = clamp(1/(1+Math.exp((r.rank-g.gRank)/Math.max(g.gRank*0.16,80))),0.03,0.97);
+    return p<0.5?'冲':(p<0.82?'稳':'保');
+  });
+  const hasSafe = tiers.includes('保');
+  const msgs = [];
+  if (overlap) msgs.push(`${overlap} 处相邻志愿位次过于接近，容易被同批投档一锅端`);
+  if (!hasSafe) msgs.push('缺少保底志愿，建议至少补一个位次明显靠后的专业组');
+  if (!msgs.length) msgs.push('梯度分布均匀，冲稳保齐全');
+
+  $('list-body').innerHTML = `
+    <h2 class="vh">我的志愿表</h2>
+    <p class="vh-sub">当前按 ${r.cls}类、预估位次 ${nf(r.rank)} 计算录取概率</p>
+
+    <div class="my-list">
+      ${items.map((g,i)=>{
+        const p = clamp(1/(1+Math.exp((r.rank-g.gRank)/Math.max(g.gRank*0.16,80))),0.03,0.97);
+        return `<div class="slot">
+          <div class="no">${LETTER[i]||i+1}</div>
+          <div style="min-width:0">
+            <div class="sname">${g.name}</div>
+            <div class="smeta">${g.code} 组 · ${nf(g.gRank)} 位 · <span style="color:${TIER_COLOR[tiers[i]]}">${tiers[i]} ${pct(p)}%</span></div>
+          </div>
+          <div class="acts">
+            <button class="sbtn" data-up="${g.id}" aria-label="上移">${ICON.up}</button>
+            <button class="sbtn" data-down="${g.id}" aria-label="下移">${ICON.down}</button>
+            <button class="sbtn" data-remove="${g.id}" aria-label="移除">${ICON.trash}</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div class="health">
+      <div class="h-t">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12.5l5.4 5.5L20 7" stroke-linecap="round"/></svg>
+        梯度体检
+      </div>
+      <div class="h-d">${msgs.join('；')}。</div>
+      <div class="h-metrics">
+        <div><div class="v">${items.length}</div><div class="k">已填志愿</div></div>
+        <div><div class="v">${nf(span)}</div><div class="k">位次跨度</div></div>
+        <div><div class="v">${overlap}</div><div class="k">重叠预警</div></div>
+      </div>
+    </div>
+
+    <div class="sticky-cta">
+      <button class="btn btn-ghost" data-act="sheet-rule">查看匹配口径</button>
+    </div>
+    <div style="height:10px"></div>`;
+}
+
+/* ================= 我的 ================= */
+function renderMe(){
+  const r = S.result;
+  $('me-body').innerHTML = `
+    <div class="prof-head">
+      <div class="avatar">${S.cls==='物理'?'物':'历'}</div>
+      <div>
+        <div class="pn">2027 届考生</div>
+        <div class="pd">广东 3+1+2 · ${S.cls}类 · 再选 ${S.second.join('/')}</div>
+      </div>
+    </div>
+
+    <div class="sec-h"><h2>成绩档案</h2><span class="more">${S.hasScore?'已录入':'未录入'}</span></div>
+    <div class="menu">
+      <button class="mrow" data-go="input">
+        <span class="mt">一模成绩</span>
+        <span class="mv">${S.hasScore?totalOf(S.m1)+' 分':'—'} ${ICON.chev}</span>
+      </button>
+      <button class="mrow" data-go="input">
+        <span class="mt">二模成绩</span>
+        <span class="mv">${S.hasScore?totalOf(S.m2)+' 分':'—'} ${ICON.chev}</span>
+      </button>
+      <button class="mrow" data-go="result">
+        <span class="mt">评测结果</span>
+        <span class="mv">${r?r.eq+' 分 / '+nf(r.rank)+' 位':'—'} ${ICON.chev}</span>
+      </button>
+    </div>
+
+    <div class="sec-h"><h2>设置与说明</h2></div>
+    <div class="menu">
+      <button class="mrow" data-act="sheet-ranktable">
+        <span class="mt">一分一段表</span><span class="mv">${r?r.eq+' 分附近':''} ${ICON.chev}</span>
+      </button>
+      <button class="mrow" data-act="sheet-rule">
+        <span class="mt">匹配口径</span><span class="mv">线差法 + 位次比较 ${ICON.chev}</span>
+      </button>
+      <div class="mrow" style="cursor:default">
+        <span class="mt">数据版本</span><span class="mv">演示数据集 v0.1</span>
+      </div>
+      <div class="mrow" style="cursor:default">
+        <span class="mt">省份 / 模式</span><span class="mv">广东 · 3+1+2</span>
+      </div>
+    </div>
+
+    <div class="sec-h"><h2>评测历史</h2></div>
+    ${r?`<button class="hist" data-go="result">
+        <div class="ht">${r.cls}类 · 一模 ${r.t1} / 二模 ${r.t2}</div>
+        <div class="hd">等效分 ${r.eq} · 位次 ${nf(r.rank)} · ${r.matches.length} 个专业组</div>
+      </button>`:`<div class="empty" style="padding:24px 0">还没有评测记录</div>`}
+
+    <div style="margin-top:22px">
+      <button class="btn btn-ghost btn-sm" style="width:100%;color:#B4573A;border-color:#E3D3CB" data-act="reset">清除本机成绩与志愿表</button>
+    </div>
+    <div class="footnote" style="margin-top:16px">
+      原型版本 v0.1。院校、专业、投档分数与位次均为演示数据，未接入广东省教育考试院官方投档统计与招生计划。
+    </div>`;
+}
+
+/* ================= 底部弹层 ================= */
+function openSheet(kind){
+  const mask = $('mask'), sh = $('sheet'), ttl = $('sheet-title'), body = $('sheet-body');
+  const r = S.result;
+  if (kind === 'rule'){
+    ttl.textContent = '匹配口径';
+    body.innerHTML = `
+      <div class="rule-text">
+        录取概率不是拍脑袋，它来自三步可复算的换算。
+        <div style="height:10px"></div>
+        <b>第一步 · 模考分转等效分</b>
+        <span class="rule-code">等效分 = 0.4×(一模 + Δ₁) + 0.6×(二模 + Δ₂)
+Δ = ${CONTROL_LINE['物理']}(特控线, 示例) − 模考特控线</span>
+        两次模考卷面难度不同，用特控线差值抵消；二模离高考更近，权重给到 60%。
+        <div style="height:14px"></div>
+        <b>第二步 · 等效分转位次</b>
+        <span class="rule-code">等效分 → 一分一段表 → 全省累计位次</span>
+        分数年年在变，位次相对稳定，所以跨年份比较一律用位次，不用分数。
+        <div style="height:14px"></div>
+        <b>第三步 · 与专业组比位次</b>
+        <span class="rule-code">P = 1 / (1 + e^((我的位次 − 组位次) / (0.16 × 组位次)))</span>
+        位次与投档线持平时概率 50%；位次每靠近 16%，概率往 90% 以上走。<br>
+        P &lt; 50% 记冲，50–82% 记稳，≥ 82% 记保。
+        <div style="height:14px"></div>
+        <b>为什么还要看波动区间</b>
+        <span class="rule-code">区间 = 等效分 ± (|一模 − 二模| / 2 + 4)</span>
+        两次模考差得越多，说明发挥越不稳定，区间越宽，越要留足保底。
+      </div>
+      <div class="footnote" style="margin-top:16px">以上为原型演示口径。真实系统还需接入当年一分一段表、招生计划变动、专业组调整与选科要求校验。</div>`;
+  }
+  if (kind === 'ranktable'){
+    ttl.textContent = '一分一段表（示例）';
+    const base = r ? r.eq : 600;
+    const cls = S.cls;
+    const rows = [];
+    for (let i=4;i>=-4;i--){
+      const s = base + i*3;
+      const a = rankOf(s, cls), b = rankOf(s+1, cls);
+      rows.push({s, r:a, n:Math.max(1, a-b), me: i===0});
+    }
+    body.innerHTML = `
+      <p class="rule-text" style="margin-bottom:10px">${cls}类 · 示例锚点插值，仅演示换算流程。</p>
+      <table class="rt-table">
+        <colgroup><col style="width:26%"><col style="width:38%"><col style="width:36%"></colgroup>
+        <thead><tr><th>分数</th><th>累计位次</th><th>同分人数</th></tr></thead>
+        <tbody>${rows.map(o=>`<tr style="${o.me?'background:#E5EDE9;font-weight:700':''}">
+          <td>${o.s}${o.me?' · 我':''}</td><td>${nf(o.r)}</td><td>${nf(o.n)}</td></tr>`).join('')}</tbody>
+      </table>
+      <div class="footnote" style="margin-top:14px">真实一分一段表由省考试院在成绩公布时发布，颗粒度为 1 分；原型用锚点插值模拟。</div>`;
+  }
+  mask.classList.add('on');
+  sh.classList.add('on');
+}
+function closeSheet(){
+  $('mask').classList.remove('on');
+  $('sheet').classList.remove('on');
+}
+
+/* ================= toast ================= */
+let toastTimer = null;
+function toast(msg){
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('on'), 2200);
+}
+
+/* ================= 事件 ================= */
+document.addEventListener('click', e=>{
+  const t = e.target.closest('[data-go],[data-back],[data-first],[data-second],[data-act],[data-school],[data-tier],[data-add],[data-remove],[data-up],[data-down],[data-major]');
+  if (!t) return;
+
+  if (t.dataset.go){ go(t.dataset.go); return; }
+  if (t.dataset.back){ go(t.dataset.back); return; }
+
+  if (t.dataset.first){
+    if (S.cls !== t.dataset.first){
+      S.cls = t.dataset.first;
+      renderInput();
+      toast('已切换为' + S.cls + '类，需要重新评测');
+    }
+    return;
+  }
+
+  if (t.dataset.second){
+    const o = t.dataset.second;
+    const i = S.second.indexOf(o);
+    if (i > -1){
+      if (S.second.length <= 2){ toast('再选科目需保留两科'); return; }
+      S.second.splice(i,1);
+    } else {
+      if (S.second.length >= 2) S.second.shift();
+      S.second.push(o);
+    }
+    renderInput();
+    return;
+  }
+
+  if (t.dataset.tier){ S.tier = t.dataset.tier; renderResult(); return; }
+
+  if (t.dataset.school){ S.schoolId = t.dataset.school; go('school'); return; }
+
+  if (t.dataset.add){
+    if (S.list.includes(t.dataset.add)) { go('list'); return; }
+    if (S.list.length >= 18){ toast('原型最多演示 18 个志愿'); return; }
+    S.list.push(t.dataset.add);
+    toast('已加入志愿表 · 第 ' + (LETTER[S.list.length-1]||S.list.length) + ' 志愿');
+    renderSchool();
+    return;
+  }
+
+  if (t.dataset.remove){
+    S.list = S.list.filter(x=>x!==t.dataset.remove);
+    renderList();
+    toast('已从志愿表移除');
+    return;
+  }
+
+  if (t.dataset.up || t.dataset.down){
+    const id = t.dataset.up || t.dataset.down;
+    const i = S.list.indexOf(id);
+    const j = t.dataset.up ? i-1 : i+1;
+    if (i<0 || j<0 || j>=S.list.length){ toast('已经到头了'); return; }
+    S.list[i] = S.list[j]; S.list[j] = id;
+    renderList();
+    return;
+  }
+
+  if (t.dataset.major){
+    toast('「' + t.dataset.major + '」专业详情：原型未展开');
+    return;
+  }
+
+  const act = t.dataset.act;
+  if (act === 'sheet-rule' || act === 'sheet-ranktable'){ openSheet(act === 'sheet-rule' ? 'rule' : 'ranktable'); return; }
+  if (act === 'grading'){
+    if (!S.list.length){ toast('志愿表还是空的，先加几个院校'); go('result'); return; }
+    go('list');
+    return;
+  }
+  if (act === 'reset'){
+    S.m1 = [0,0,0,0,0,0]; S.m2 = [0,0,0,0,0,0];
+    S.hasScore = false; S.result = null; S.list = [];
+    S.tier = '稳'; S.knownRank = null;
+    renderMe(); renderHome();
+    toast('已清除本机成绩与志愿表');
+    return;
+  }
+  if (act === 'close-sheet'){ closeSheet(); return; }
+});
+
+document.addEventListener('click', e=>{
+  if (e.target.id === 'mask') closeSheet();
+});
+
+document.addEventListener('input', e=>{
+  const t = e.target;
+  if (t.dataset && t.dataset.m){
+    const key = t.dataset.m, i = Number(t.dataset.i);
+    let v = Number(t.value);
+    if (isNaN(v)) v = 0;
+    if (v > SUBJ_MAX[i]) v = SUBJ_MAX[i];
+    if (v < 0) v = 0;
+    S[key][i] = v;
+    $('tot-'+key).textContent = totalOf(S[key]);
+    return;
+  }
+  if (t.id === 'line-m1'){ S.line1 = Number(t.value)||0; return; }
+  if (t.id === 'line-m2'){ S.line2 = Number(t.value)||0; return; }
+  if (t.id === 'known-rank'){ S.knownRank = Number(t.value)||0; return; }
+});
+
+document.addEventListener('click', e=>{
+  if (e.target.closest('#btn-eval')){
+    const t1 = totalOf(S.m1), t2 = totalOf(S.m2);
+    if (t1 < 120 || t2 < 120){ toast('两次模考分数都要填完整，再试试'); return; }
+    if (S.second.length < 2){ toast('先选满两门再选科目'); return; }
+    go('calc');
+  }
+});
+
+/* ================= 启动 ================= */
+(function init(){
+  const total = DATA.physics.length + DATA.history.length;
+  const sg = $('stat-groups');
+  if (sg) sg.textContent = total;
+  go('home');
+})();
+</script>
+</body>
+</html>
